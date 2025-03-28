@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Blood Monitoring System Sign Up</title>
+        <link rel="stylesheet" href="signup.css">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="signup.js"></script>
+        <script src="chart.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="signup-box">
+                <h1>Sign Up</h1>
+                <form action="signup.php" method="post"> 
+                    <div class="textbox">
+                        <input type="text" name="username" placeholder="Username">
+                    </div>
+                    <div class="textbox">
+                        <input type="password" name="password" placeholder="Password">
+                    </div>
+                    <div class="textbox">
+                        <input type="password" name="password2" placeholder="Confirm Password">
+                    </div>
+                    <div class="textbox">
+                        <input type="email" name="email" placeholder="Email">
+                    </div>
+                    <input type="submit" class="btn" value="Sign Up">
+                    <div class="error"></div>
+                    <div class="success"></div>
+                </form>
+                <a href="login.php">Already have an account? Log in</a>
+                </div>
+                <div class="chart-section">
+                    <div class="chart">
+                        <canvas id="myChart"></canvas>
+                    </div>
+                </div>
+        </div>
+    </body>
+</html>

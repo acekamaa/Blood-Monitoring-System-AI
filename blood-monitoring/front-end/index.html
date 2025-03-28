@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Type Distribution in Kenya</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- <script src="script.js"></script> -->
+    <!-- Chart.js CDN -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+</head>
+<body>
+    <header>
+        <h1>Blood Type Distribution in Kenya</h1>
+    </header>
+
+    <!-- navigation tab -->
+    <sidenav class="navigation">
+        <ul>
+            <li>Home</li>
+            <li>Services</li>
+            <li>Contacts</li>
+        </ul>
+    </sidenav>
+
+    <div class="container">
+        <!-- Input Form Section -->
+        <section class="form-section">
+            <h2>Submit Blood Type Data</h2>
+            <form id="bloodForm">
+                <label for="bloodType">Blood Type:</label>
+                <select id="bloodType" name="bloodType" required>
+                    <option value="">Select Blood Type</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                </select>
+
+                <label for="county">County:</label>
+                <input type="text" id="county" name="county" placeholder="e.g., Nairobi" required>
+
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+
+                <button type="submit">Submit</button>
+            </form>
+            <div id="message"></div>
+        </section>
+    </div>
+
+    <!-- Chart Section -->
+    <!-- <div class="chart_container">
+        <section class="chart-section">
+            <h2>Blood Type Chart</h2>
+            <canvas id="bloodChart"></canvas>
+        </section>
+    </div> -->
+</body>
+</html>
