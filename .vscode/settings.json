@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "group": "postgreConn",
+            "name": "postgreConnect",
+            "database": "blood_monitoring",
+            "username": "postgres"
+        }
+    ]
+}
