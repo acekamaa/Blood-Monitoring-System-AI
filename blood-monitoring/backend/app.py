@@ -5,17 +5,18 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 import os
 from datetime import datetime
+import psycopg2
 
 # Load environment variables
 load_dotenv()
 print("Environment variables loaded")
 
 # PostgreSQL connection details
-DB_USER = os.getenv('DB_USER', 'postgres')
-DB_PASSWORD = os.getenv('DB_PASSWORD', '123456789')
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_PORT = os.getenv('DB_PORT', '5432')
-DB_NAME = os.getenv('DB_NAME', 'blood_monitoring')
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_HOST = os.getenv('DB_HOST') 
+DB_PORT = os.getenv('DB_PORT')
+DB_NAME = os.getenv('DB_NAME')
 
 # Check if environment variables are set
 if not all([DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME]):
@@ -74,6 +75,11 @@ with app.app_context():
     db.create_all()
     print("Database tables created")
 
+# health check for docker
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "Running"}), 200
+
 # API route to submit data 'http:127.0.0.1.5000/api/submit'
 print("Setting up API route to submit data")
 @app.route('/api/submit', methods=['POST'])
@@ -90,11 +96,6 @@ def submit_data():
         
     # Convert date string to date object
     formatted_date = datetime.strptime(data['date'], "%Y-%m-%d").date()
-
-    print("🔍 Checking request method:", request.method)
-    print("🔍 Request Headers:", request.headers)
-    print("🔍 Request Data:", request.data)
-    print("🔍 Request JSON:", request.get_json())
 
     try:
         # Create a new BloodRecord instance
