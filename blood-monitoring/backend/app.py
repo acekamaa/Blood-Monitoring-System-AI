@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 import os
 from datetime import datetime
-from dummydata.blood_prediction import predict_shortage
+from ai_model import predict_shortage  # Updated import
 from blood_bank import check_blood_levels
 
 # Load environment variables
@@ -35,7 +35,7 @@ print("CORS enabled for all routes")
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 print("SQLAlchemy configured with the database URI")
-print("🔗 Database URI:", app.config['SQLALCHEMY_DATABASE_URI'])
+print("\U0001F517 Database URI:", app.config['SQLALCHEMY_DATABASE_URI'])
 
 # Enable debugging mode
 app.config['DEBUG'] = True
@@ -62,51 +62,93 @@ except Exception as e:
 
 # Define the BloodRecord model
 class BloodRecord(db.Model):
-    __tablename__ = 'blood_records'
+    __tablename__ = 'blood_record'
     bloodbank_id = db.Column(db.Integer, primary_key=True)
     blood_type = db.Column(db.String(3), nullable=False)
-    blood_bank_county = db.Column(db.String(50), nullable=False)
+    county = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, nullable=False)
     print("BloodRecord model defined")
 
     def __repr__(self):
-        return f"<BloodRecord {self.blood_type} - {self.blood_bank_county} - {self.date}>"
-    
-print(BloodRecord.__repr__(BloodRecord))
+        return f"<BloodRecord {self.blood_type} - {self.county} - {self.date}>"
 
 # Create the database table if it doesn't exist
 with app.app_context():
     db.create_all()
     print("Database tables created")
 
+# Submit API
+@app.route('/api/submit', methods=['POST'])
+def submit_data():
+    data = request.get_json()
+    if not all(k in data for k in ('bloodType', 'county', 'date', 'demand')):
+        return jsonify({'message': 'Missing fields'}), 400
+    
+    record = BloodRecord(
+        blood_type=data['bloodType'],
+        county=data['county'],
+        date=data['date'],
+        demand=data['demand']
+    )
+    db.session.add(record)
+    db.session.commit()
+    return jsonify({'message': 'Data submitted successfully'})
+
+# Update API
+@app.route('/api/update/<int:id>', methods=['PUT'])
+def update_data(id):
+    data = request.get_json()
+    record = BloodRecord.query.get(id)
+    if not record:
+        return jsonify({'message': 'Record not found'}), 404
+    
+    record.blood_type = data.get('bloodType', record.blood_type)
+    record.county = data.get('county', record.county)
+    record.date = data.get('date', record.date)
+    record.demand = data.get('demand', record.demand)
+    db.session.commit()
+    return jsonify({'message': 'Record updated successfully'})
+
+# Delete API
+@app.route('/api/delete/<int:id>', methods=['DELETE'])
+def delete_data(id):
+    record = BloodRecord.query.get(id)
+    if not record:
+        return jsonify({'message': 'Record not found'}), 404
+    
+    db.session.delete(record)
+    db.session.commit()
+    return jsonify({'message': 'Record deleted successfully'})
+
 # health check for docker
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "Running"}), 200
 
-# api to predict blood shortages
+# API to predict blood shortages
 @app.route('/api/predict-shortage', methods=['POST'])
 def shortage_prediction():
     """
     API to predict blood shortage based on input data.
-    Expected JSON input: {"blood_stock": 100, "blood_demand": 120}
+    Expected JSON input: {"blood_type": "A+", "county": "Nairobi", "demand": 15}
     """
     data = request.get_json()
-
+    
     # Validate input
-    if "blood_stock" not in data or "blood_demand" not in data:
+    if "blood_type" not in data or "county" not in data or "demand" not in data:
         return jsonify({"error": "Missing parameters"}), 400
 
     # Get input values
-    blood_stock = data["blood_stock"]
-    blood_demand = data["blood_demand"]
+    blood_type = data["blood_type"]
+    county = data["county"]
+    demand = data["demand"]
 
     # Make prediction
-    prediction_result = predict_shortage(blood_stock, blood_demand)
+    prediction_result = predict_shortage(blood_type, county, demand)
 
     return jsonify({"prediction": prediction_result})
 
-# check blood level
+# Check blood level
 @app.route('/api/check-blood-level', methods=['GET'])
 def get_blood_levels():
     """
@@ -120,119 +162,6 @@ def get_blood_levels():
     
     return jsonify({"blood_levels": data})
 
-# API route to submit data 'http:127.0.0.1.5000/api/submit'
-print("Setting up API route to submit data")
-@app.route('/api/submit', methods=['POST'])
-def submit_data():
-    print("Received request to submit data")
-    data = request.get_json()
-        
-    # Debugging: Print the received data
-    print("Received data:", data)
-        
-    # Validate required fields
-    if not all(k in data for k in ('bloodType', 'county', 'date')):
-       return jsonify({'message': 'Missing fields'}), 400
-        
-    # Convert date string to date object
-    formatted_date = datetime.strptime(data['date'], "%Y-%m-%d").date()
-
-    try:
-        # Create a new BloodRecord instance
-        record = BloodRecord(
-            blood_type=data['bloodType'], 
-            county=data['county'], 
-            date=formatted_date
-        )
-
-        # Add the record to the session and commit
-        db.session.add(record)
-        db.session.commit()
-    
-        return jsonify({'message': 'Data submitted successfully'}), 201
-    
-    except Exception as e:
-        # Log the error for debugging
-        print(f"Error submitting data: {e}")
-        return jsonify({'error': str(e)}), 500
-    
-# API route to get data 
-@app.route('/api/get_data', methods=['GET'])
-def get_data():
-    print("Received request to get data")
-    try:
-        # Query all records from the database
-        records = BloodRecord.query.all()
-        
-        # Convert records to a list of dictionaries
-        data = [{'id': record.id, 'blood_type': record.blood_type, 'county': record.county, 'date': record.date.isoformat()} for record in records]
-        
-        return jsonify(data), 200
-    
-    except Exception as e:
-        # Log the error for debugging
-        print(f"Error retrieving data: {e}")
-        return jsonify({'error': str(e)}), 500
-    
-# API route to delete data
-@app.route('/api/delete/<int:id>', methods=['DELETE'])
-def delete_data(id):
-    print(f"Received request to delete data with id: {id}")
-    print(f"Checking record ID: {id}")
-
-    try:
-        # Query the record by ID
-        record = BloodRecord.query.get(id)
-        
-        if not record:
-            return jsonify({'message': 'Record not found'}), 404
-        
-        # Delete the record from the session and commit
-        db.session.delete(record)
-        db.session.commit()
-        
-        return jsonify({'message': 'Record deleted successfully'}), 200
-    
-    except Exception as e:
-        # Log the error for debugging
-        print(f"Error deleting data: {e}")
-        return jsonify({'error': str(e)}), 500
-    
-# API route to update data
-@app.route('/api/update/<int:id>', methods=['PUT'])
-def update_data(id):
-    print(f"Received request to update data with id: {id}")
-    try:
-        data = request.get_json()
-        
-        # Debugging: Print the received data
-        print("Received data:", data)
-        
-        # Query the record by ID
-        record = BloodRecord.query.get(id)
-
-        # Validate required fields
-        if not all(k in data for k in ('bloodType', 'county', 'date')):
-            return jsonify({'message': 'Missing fields'}), 400
-         
-        if not record:
-            return jsonify({'message': 'Record not found'}), 404
-        
-        # Update the record
-        record.blood_type = data['bloodType']
-        record.county = data['county']
-        record.date = datetime.strptime(data['date'], "%Y-%m-%d").date()
-        
-        # Commit the changes
-        db.session.commit()
-        
-        return jsonify({'message': 'Record updated successfully'}), 200
-    
-    except Exception as e:
-        # Log the error for debugging
-        print(f"Error updating data: {e}")
-        return jsonify({'error': str(e)}), 500
-    
 # Run the app
 if __name__ == '__main__':
     app.run(debug=True)
