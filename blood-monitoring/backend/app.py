@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 import os
 from datetime import datetime
-import psycopg2
+from dummydata.blood_prediction import predict_shortage
+from blood_bank import check_blood_levels
 
 # Load environment variables
 load_dotenv()
@@ -62,14 +63,17 @@ except Exception as e:
 # Define the BloodRecord model
 class BloodRecord(db.Model):
     __tablename__ = 'blood_records'
-    id = db.Column(db.Integer, primary_key=True)
+    bloodbank_id = db.Column(db.Integer, primary_key=True)
     blood_type = db.Column(db.String(3), nullable=False)
-    county = db.Column(db.String(50), nullable=False)
+    blood_bank_county = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, nullable=False)
     print("BloodRecord model defined")
+
     def __repr__(self):
-        return f"<BloodRecord {self.blood_type} - {self.county} - {self.date}>"
+        return f"<BloodRecord {self.blood_type} - {self.blood_bank_county} - {self.date}>"
+    
 print(BloodRecord.__repr__(BloodRecord))
+
 # Create the database table if it doesn't exist
 with app.app_context():
     db.create_all()
@@ -79,6 +83,42 @@ with app.app_context():
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "Running"}), 200
+
+# api to predict blood shortages
+@app.route('/api/predict-shortage', methods=['POST'])
+def shortage_prediction():
+    """
+    API to predict blood shortage based on input data.
+    Expected JSON input: {"blood_stock": 100, "blood_demand": 120}
+    """
+    data = request.get_json()
+
+    # Validate input
+    if "blood_stock" not in data or "blood_demand" not in data:
+        return jsonify({"error": "Missing parameters"}), 400
+
+    # Get input values
+    blood_stock = data["blood_stock"]
+    blood_demand = data["blood_demand"]
+
+    # Make prediction
+    prediction_result = predict_shortage(blood_stock, blood_demand)
+
+    return jsonify({"prediction": prediction_result})
+
+# check blood level
+@app.route('/api/check-blood-level', methods=['GET'])
+def get_blood_levels():
+    """
+    API to check blood levels in blood banks.
+    Returns a list of all blood types with their stock status.
+    """
+    data = check_blood_levels()
+    
+    if not data:
+        return jsonify({"message": "No blood records found"}), 404
+    
+    return jsonify({"blood_levels": data})
 
 # API route to submit data 'http:127.0.0.1.5000/api/submit'
 print("Setting up API route to submit data")
@@ -192,6 +232,7 @@ def update_data(id):
         # Log the error for debugging
         print(f"Error updating data: {e}")
         return jsonify({'error': str(e)}), 500
+    
 # Run the app
 if __name__ == '__main__':
     app.run(debug=True)
