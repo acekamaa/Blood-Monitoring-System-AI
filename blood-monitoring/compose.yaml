@@ -1,0 +1,40 @@
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_container
+    restart: always
+    environment:
+      POSTGRES_USER: DB_USER
+      POSTGRES_PASSWORD: DB_PASSWORD
+      POSTGRES_DB: DB_NAME
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+    container_name: flask_app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_USER: DB_USER
+      DB_PASSWORD: DB_PASSWORD
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: DB_NAME
+    ports:
+      - 8001:8001
+
+volumes:
+  postgres_data:

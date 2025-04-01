@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="static/Dashboardstyles.css">
+    <link rel="stylesheet" href="static/Dashboard.js">
+</head>
+<body>
+    <nav class="navbar">
+        <h2>Blood Monitoring Dashboard</h2>
+    </nav>
+    
+    <div class="container">
+        <h3>Blood Type Distribution</h3>
+        <canvas id="bloodChart"></canvas>
+        
+        <h3>Shortage Predictions</h3>
+        <p id="predictionText">Loading prediction...</p>
+
+        <h3>Reports</h3>
+        <button id="downloadReport">Download Report</button>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            const API_BASE_URL = "http://127.0.0.1:5000";
+            
+            // Fetch blood type distribution data
+            try {
+                const response = await fetch(`${API_BASE_URL}/blood-distribution`);
+                const data = await response.json();
+                
+                const ctx = document.getElementById('bloodChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(data.distribution),
+                        datasets: [{
+                            label: 'Blood Units',
+                            data: Object.values(data.distribution),
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                        }]
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching blood distribution data:", error);
+            }
+            
+            // Fetch shortage prediction
+            try {
+                const response = await fetch(`${API_BASE_URL}/predict-shortage`);
+                const prediction = await response.json();
+                document.getElementById("predictionText").innerText = `Prediction: ${prediction.prediction}`;
+            } catch (error) {
+                console.error("Error fetching prediction:", error);
+            }
+            
+            // Handle report download
+            document.getElementById("downloadReport").addEventListener("click", function () {
+                window.location.href = `${API_BASE_URL}/download-report`;
+            });
+        });
+    </script>
+</body>
+</html>

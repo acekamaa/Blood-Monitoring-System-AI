@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Date
 from dotenv import load_dotenv
@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 from ai_model import predict_shortage  # Updated import
 from blood_bank import check_blood_levels
+import psycopg2
 
 # Load environment variables
 load_dotenv()
@@ -76,6 +77,36 @@ class BloodRecord(db.Model):
 with app.app_context():
     db.create_all()
     print("Database tables created")
+
+class Login(db.Model):
+    __tablename__ = 'user_details'
+    name = db.Column(db.String(50), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    password = db.Column(db.String(50), nullable=False)
+    print("user_details defined")
+
+    def __repr__(self):
+        return f"<Login {self.name} - {self.id} - {self.password}>"
+    
+with app.app_context():
+    db.create_all()
+    print("user_details created")
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+
+    # Sample authentication check (replace with actual database verification)
+    if username == "admin" and password == "password" in ('username', 'password'):  
+        return jsonify({"success": True}), 200
+    else:
+        return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
 # Submit API
 @app.route('/api/submit', methods=['POST'])
@@ -161,6 +192,22 @@ def get_blood_levels():
         return jsonify({"message": "No blood records found"}), 404
     
     return jsonify({"blood_levels": data})
+
+@app.route('/')
+def home():
+    return render_template('dashboard.html')
+
+@app.route('/download-report')
+def download_report():
+    return send_from_directory('static', 'report.pdf', as_attachment=True)
+
+@app.route('/upload', methods=['POST'])
+def upload_data():
+    file = request.files['file']
+    if file and file.filename.endswith('.csv'):
+        file.save(f"static/uploads/{file.filename}")  # Save file
+        return jsonify({"message": "File uploaded successfully!"}), 200
+    return jsonify({"error": "Invalid file format"}), 400
 
 # Run the app
 if __name__ == '__main__':

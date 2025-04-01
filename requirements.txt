@@ -1,0 +1,28 @@
+# Web Framework
+Flask==2.2.3
+flask_sqlalchemy==3.0.2
+flask-cors==3.0.10
+
+# Database
+psycopg2-binary==2.9.5
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Machine Learning & Forecasting
+pandas==2.0.3
+scikit-learn==1.2.2
+numpy==1.23.5
+statsmodels==0.14.0  # For time series forecasting
+prophet==1.1.2  # Facebook Prophet for trend forecasting
+
+# Data Visualization (Optional, for dashboards or reports)
+matplotlib==3.7.1
+seaborn==0.12.2
+
+# Alerts & Notifications (Optional, if sending alerts)
+twilio==8.9.0  # For SMS alerts (if using Twilio API)
+# smtplib  Built-in Python module for email alerts. Import to use
+
+# API Testing
+requests==2.28.2

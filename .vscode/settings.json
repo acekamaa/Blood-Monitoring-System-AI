@@ -10,5 +10,8 @@
             "database": "blood_monitoring",
             "username": "postgres"
         }
+    ],
+    "python.analysis.extraPaths": [
+        "./blood-monitoring/backend/dummydata"
     ]
 }

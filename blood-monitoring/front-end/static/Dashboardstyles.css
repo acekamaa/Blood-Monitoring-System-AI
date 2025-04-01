@@ -1,0 +1,56 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    text-align: center;
+}
+
+.navbar {
+    background-color: #343a40;
+    color: white;
+    padding: 5px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+canvas {
+    width: 100% !important;
+    max-height: 400px;
+    margin-top: 20px;
+}
+
+h3 {
+    color: #333;
+    margin-top: 20px;
+}
+
+#predictionText {
+    font-size: 18px;
+    font-weight: bold;
+    color: #d9534f;
+}
+
+button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #218838;
+}
